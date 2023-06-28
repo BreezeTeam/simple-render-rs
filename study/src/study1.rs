@@ -1,21 +1,18 @@
 use env_logger;
 use image::{DynamicImage, GenericImageView};
+use image::{ImageBuffer, ImageFormat, Rgb, Rgba};
 use log;
 use minifb::{Key, Window, WindowOptions};
+use std::io::{self, Read, Write};
 
 /// 该示例代码将image 图像转为 [u32] 像素然后在窗口中进行了绘制
+/// 但是这个代码有个问题就是RGBA通道值有点不对
 fn main() {
-    env_logger::init();
-    // 读取cargo.toml 文件所在地址
-    let resource_path = format!("{}/../resource", env!("CARGO_MANIFEST_DIR"));
-    log::info!("resource_path :{}", &resource_path);
-
     // 此处由于宏展开，必须使用编译器确定的变量才能正确将字节加载到二进制中
-    let image_content = include_bytes!("./fractal.png");
+    let image_content = include_bytes!("../../resource/study/img.png");
 
     // 将字节数据加载为图像对象
     let image = image::load_from_memory(image_content).expect("Failed to load image");
-
 
     // 获取图像的宽度和高度
     let width = image.width() as usize;
@@ -33,7 +30,7 @@ fn main() {
         .pixels()
         .map(|pixel| {
             let [r, g, b, a] = pixel.0;
-            ((r as u32) << 24) | ((g as u32) << 16) | ((b as u32) << 8) | (a as u32)
+            ((b as u32) << 24) | ((g as u32) << 16) | ((r as u32) << 8) | (a as u32)
         })
         .collect();
 

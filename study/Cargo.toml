@@ -11,8 +11,17 @@ path = 'src/study1.rs'
 name = 'study2'
 path = 'src/study2.rs'
 
+[[bin]]
+name = 'study3'
+path = 'src/study3.rs'
+[[bin]]
+name = 'study4'
+path = 'src/study4.rs'
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+env_logger = "0.10.0"
 image = "0.24.6"
+log = "0.4.19"
 minifb = "0.24.0"

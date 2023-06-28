@@ -1,16 +1,22 @@
-use image::{DynamicImage};
+use image::DynamicImage;
 use minifb::{Key, Window, WindowOptions};
-use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 
 /// 创建窗口并且显示图片
-pub fn display_image(image: Arc<Mutex<DynamicImage>>, width: usize, height: usize, exit_flag: Arc<AtomicBool>) {
+pub fn display_image(
+    image: Arc<Mutex<DynamicImage>>,
+    width: usize,
+    height: usize,
+    exit_flag: Arc<AtomicBool>,
+) {
     // 创建窗口
     let mut window = Window::new("Image Viewer", width, height, WindowOptions::default())
         .expect("Failed to create window");
 
     // 将图像数据传递给窗口进行显示
-    while window.is_open() && !window.is_key_down(Key::Escape) && !exit_flag.load(Ordering::Relaxed) {
+    while window.is_open() && !window.is_key_down(Key::Escape) && !exit_flag.load(Ordering::Relaxed)
+    {
         if exit_flag.load(Ordering::Relaxed) {
             break;
         }
@@ -36,15 +42,14 @@ pub fn display_image(image: Arc<Mutex<DynamicImage>>, width: usize, height: usiz
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use std::ops::DerefMut;
     use super::*;
+    use std::ops::DerefMut;
     use std::thread;
 
-    use std::time::Duration;
     use image::{ImageBuffer, ImageFormat, Rgb, Rgba};
+    use std::time::Duration;
 
     /// 显示多个图像
     #[test]
@@ -65,7 +70,6 @@ mod tests {
         //         *pixel = Rgba([255, 0, 0, 255]); // 设置圆形为红色
         //     }
         // }
-
 
         //创建一个共享变量
         let exit_flag = Arc::new(AtomicBool::new(false));
@@ -91,12 +95,10 @@ mod tests {
             move || display_image(Arc::new(Mutex::new(image3)), width3, height3, exit_flag)
         });
 
-
         // 在断言后的代码块中添加适当的等待时间
         thread::sleep(Duration::from_secs(2)); // 2秒的等待时间示例
-        // 然后将其设置为可以关闭
+                                               // 然后将其设置为可以关闭
         exit_flag.store(true, Ordering::Relaxed);
-
 
         //断言
         assert!(thread1.join().is_ok());
@@ -151,9 +153,8 @@ mod tests {
 
         // 在断言后的代码块中添加适当的等待时间
         thread::sleep(Duration::from_secs(2)); // 2秒的等待时间示例
-        // 然后将其设置为可以关闭
+                                               // 然后将其设置为可以关闭
         exit_flag.store(true, Ordering::Relaxed);
-
 
         // 断言
         assert!(thread1.join().is_ok());
