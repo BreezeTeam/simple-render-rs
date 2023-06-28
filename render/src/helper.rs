@@ -1,4 +1,4 @@
-use image::DynamicImage;
+use image::{DynamicImage, Rgba, RgbaImage};
 use minifb::{Key, Window, WindowOptions};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
@@ -17,9 +17,6 @@ pub fn display_image(
     // 将图像数据传递给窗口进行显示
     while window.is_open() && !window.is_key_down(Key::Escape) && !exit_flag.load(Ordering::Relaxed)
     {
-        if exit_flag.load(Ordering::Relaxed) {
-            break;
-        }
         // 获取图像数据的读锁
         let image_data = image.lock().unwrap();
 
@@ -36,10 +33,53 @@ pub fn display_image(
             .collect();
 
         // 更新窗口显示
-        window
-            .update_with_buffer(&u32_image, width, height)
-            .expect("Failed to update window");
+        if let Err(_) = window.update_with_buffer(&u32_image, width, height) {
+            eprintln!("Failed to update window");
+            break;
+        }
     }
+}
+
+/// 水平翻转
+fn flip_horizontally(image: &mut RgbaImage) {
+    let width = image.width();
+    let height = image.height();
+
+    for y in 0..height {
+        for x in 0..width / 2 {
+            let x2 = width - 1 - x;
+            let temp = image.get_pixel(x, y).clone();
+            image.put_pixel(x, y, *image.get_pixel(x2, y));
+            image.put_pixel(x2, y, temp);
+        }
+    }
+}
+
+/// 垂直翻转
+fn flip_vertically(image: &mut RgbaImage) {
+    let width = image.width();
+    let height = image.height();
+
+    for y in 0..height / 2 {
+        for x in 0..width {
+            let y2 = height - 1 - y;
+            let temp = image.get_pixel(x, y).clone();
+            image.put_pixel(x, y, *image.get_pixel(x, y2));
+            image.put_pixel(x, y2, temp);
+        }
+    }
+}
+
+/// 清空图像
+fn clear(image: &mut RgbaImage) {
+    for pixel in image.pixels_mut() {
+        *pixel = Rgba([0, 0, 0, 0]);
+    }
+}
+
+/// 缩放图像
+fn scale(image: &DynamicImage, width: u32, height: u32) -> DynamicImage {
+    image.resize_exact(width, height, image::imageops::FilterType::Lanczos3)
 }
 
 #[cfg(test)]
@@ -96,8 +136,10 @@ mod tests {
         });
 
         // 在断言后的代码块中添加适当的等待时间
-        thread::sleep(Duration::from_secs(2)); // 2秒的等待时间示例
-                                               // 然后将其设置为可以关闭
+        // 2秒的等待时间示例
+        thread::sleep(Duration::from_secs(2));
+
+        // 然后将其设置为可以关闭
         exit_flag.store(true, Ordering::Relaxed);
 
         //断言
@@ -190,5 +232,44 @@ mod tests {
         // for thread in threads {
         //     thread.join().unwrap();
         // }
+    }
+
+    #[test]
+    fn test_flip_horizontally() {
+        let mut image = RgbaImage::from_fn(2, 2, |x, y| Rgba([x as u8, y as u8, 0, 255]));
+
+        flip_horizontally(&mut image);
+
+        assert_eq!(image.get_pixel(0, 0), &Rgba([1, 0, 0, 255]));
+        assert_eq!(image.get_pixel(1, 0), &Rgba([0, 0, 0, 255]));
+        assert_eq!(image.get_pixel(0, 1), &Rgba([1, 1, 0, 255]));
+        assert_eq!(image.get_pixel(1, 1), &Rgba([0, 1, 0, 255]));
+    }
+    #[test]
+    fn test_flip_vertically() {
+        let mut image = RgbaImage::from_fn(2, 2, |x, y| Rgba([x as u8, y as u8, 0, 255]));
+
+        flip_vertically(&mut image);
+
+        assert_eq!(image.get_pixel(0, 0), &Rgba([0, 1, 0, 255]));
+        assert_eq!(image.get_pixel(1, 0), &Rgba([1, 1, 0, 255]));
+        assert_eq!(image.get_pixel(0, 1), &Rgba([0, 0, 0, 255]));
+        assert_eq!(image.get_pixel(1, 1), &Rgba([1, 0, 0, 255]));
+    }
+    #[test]
+    fn test_clear() {
+        let mut image = RgbaImage::from_pixel(2, 2, Rgba([1, 2, 3, 4]));
+        clear(&mut image);
+        assert_eq!(image.get_pixel(0, 0), &Rgba([0, 0, 0, 0]));
+        assert_eq!(image.get_pixel(1, 0), &Rgba([0, 0, 0, 0]));
+        assert_eq!(image.get_pixel(0, 1), &Rgba([0, 0, 0, 0]));
+        assert_eq!(image.get_pixel(1, 1), &Rgba([0, 0, 0, 0]));
+    }
+    #[test]
+    fn test_scale() {
+        let image = RgbaImage::from_pixel(2, 2, Rgba([1, 2, 3, 4]));
+        let scaled_image = scale(&image::DynamicImage::ImageRgba8(image.clone()), 4, 4);
+        assert_eq!(scaled_image.width(), 4);
+        assert_eq!(scaled_image.height(), 4);
     }
 }

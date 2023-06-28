@@ -2,21 +2,9 @@ use std::{fs::File, io};
 
 use image::{ImageBuffer, ImageFormat, Rgba};
 
-/// 将 ImageBuffer 写入到 tga文件中
-fn write_tga_file(image: &ImageBuffer<Rgba<u8>, Vec<u8>>, file_path: &str) -> io::Result<()> {
-    let mut file = File::create(file_path)?;
-    let encoded_image = image::DynamicImage::ImageRgba8(image.clone());
-    encoded_image
-        .write_to(&mut file, ImageFormat::Tga)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
-    Ok(())
-}
-/// 读取tga文件，并且加载为ImageBuffer
-fn read_tga_file(file_path: &str) -> io::Result<ImageBuffer<Rgba<u8>, Vec<u8>>> {
-    let image = image::open(file_path).unwrap().to_rgba8();
-    Ok(image)
-}
-///使用image存储tga格式的数据
+/// 读取原始的tga图像
+/// 添加一个红色的圆
+/// 然后在存储为tga格式
 fn main() {
     std::env::set_var("RUST_LOG", "info");
     env_logger::init();
@@ -25,9 +13,7 @@ fn main() {
     log::info!("resource_path :{}", &resource_path);
 
     // 读取原始的 TGA 文件
-    let original_image = read_tga_file(&format!("{}/study/img2.tga", resource_path))
-        .expect("Failed to read TGA file");
-
+    let original_image = image::open(&format!("{}/study/img2.tga", resource_path)).expect("Failed to read TGA file").to_rgba8();
     // 在图像上添加一个圆形
     let mut modified_image = original_image.clone();
     let (width, height) = modified_image.dimensions();
@@ -42,10 +28,5 @@ fn main() {
         }
     }
 
-    // Save the image
-    write_tga_file(
-        &modified_image,
-        &format!("{}/study/img2-circle.tga", resource_path),
-    )
-    .expect("Failed to write TGA file");
+    modified_image.save(&format!("{}/study/img2-circle.tga", resource_path)).expect("Failed to write TGA file");
 }
