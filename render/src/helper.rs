@@ -28,7 +28,8 @@ pub fn display_image(
             .pixels()
             .map(|pixel| {
                 let [r, g, b, a] = pixel.0;
-                ((r as u32) << 24) | ((g as u32) << 16) | ((b as u32) << 8) | (a as u32)
+                // 通道顺序为RGBA，即先红色（R），然后绿色（G），然后蓝色（B），最后透明度（A）。
+                ((r as u32) << 16) | ((g as u32) << 8) | (b as u32)
             })
             .collect();
 
@@ -41,7 +42,7 @@ pub fn display_image(
 }
 
 /// 水平翻转
-fn flip_horizontally(image: &mut RgbaImage) {
+pub fn flip_horizontally(image: &mut RgbaImage) {
     let width = image.width();
     let height = image.height();
 
@@ -56,7 +57,7 @@ fn flip_horizontally(image: &mut RgbaImage) {
 }
 
 /// 垂直翻转
-fn flip_vertically(image: &mut RgbaImage) {
+pub fn flip_vertically(image: &mut RgbaImage) {
     let width = image.width();
     let height = image.height();
 
@@ -71,14 +72,14 @@ fn flip_vertically(image: &mut RgbaImage) {
 }
 
 /// 清空图像
-fn clear(image: &mut RgbaImage) {
+pub fn clear(image: &mut RgbaImage) {
     for pixel in image.pixels_mut() {
         *pixel = Rgba([0, 0, 0, 0]);
     }
 }
 
 /// 缩放图像
-fn scale(image: &DynamicImage, width: u32, height: u32) -> DynamicImage {
+pub fn scale(image: &DynamicImage, width: u32, height: u32) -> DynamicImage {
     image.resize_exact(width, height, image::imageops::FilterType::Lanczos3)
 }
 
