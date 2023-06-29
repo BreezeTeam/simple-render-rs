@@ -65,7 +65,7 @@ pub fn random_rgba() -> Rgba<u8> {
 }
 
 #[cfg(test)]
-mod tests {
+mod line_tests {
     use super::super::display_images;
     use super::*;
     use image::ImageBuffer;

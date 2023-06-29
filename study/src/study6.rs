@@ -76,7 +76,6 @@ fn main() {
     line(100, 0, 300, 10000, &mut original_image, red);
     line(13, 20, 80, 40, &mut original_image, white);
     line(20, 13, 40, 80, &mut original_image, red);
-    // line2(80, 40, 13, 20, &mut original_image, red);
     original_image
         .save(&format!("{}/study/img-display.png", resource_path))
         .expect("Failed to write clear TGA file");

@@ -73,21 +73,14 @@ fn main() {
                         );
                     });
                     faces.push(vertices.clone());
-                    log::debug!(
+                    log::info!(
                         "obj_name :{:?} group.name:{:?} vertices :{:?}",
                         object.name,
                         group.name,
                         vertices.clone(),
                     );
 
-                    // for v in vertices {
-                    //     // 计算屏幕坐标
-                    //     let x0 = (v[0] / v[2]) * fov_x + center_x;
-                    //     let y0 = (v[1] / v[2]) * fov_y + center_y;
-                    // 绘制点
-                    // set_pixel(x0, y0, &mut image, white);
-                    // }
-
+                    // 我们只绘制xy坐标，z坐标是深度信息，暂时忽略
                     for i in 0..2 {
                         let v0 = vertices[i];
                         let v1 = vertices[i + 1];
@@ -96,11 +89,6 @@ fn main() {
                         let y0 = (v0[1] + 1.) * height as f32 / 2.;
                         let x1 = (v1[0] + 1.) * width as f32 / 2.;
                         let y1 = (v1[1] + 1.) * height as f32 / 2.;
-
-                        // let x0 = (v0[0] / v0[2]) * fov_x + center_x;
-                        // let y0 = (v0[1] / v0[2]) * fov_y + center_y;
-                        // let x1 = (v1[0] / v1[2]) * fov_x + center_x;
-                        // let y1 = (v1[1] / v1[2]) * fov_y + center_y;
 
                         line(
                             x0 as i32,

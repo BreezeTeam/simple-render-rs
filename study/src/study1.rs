@@ -4,6 +4,7 @@ use minifb::{Key, Window, WindowOptions};
 
 /// 该示例代码将image 图像转为 [u32] 像素然后在窗口中进行了绘制
 /// 但是这个代码有个问题就是RGBA通道值有点不对
+/// 然后我们根据这个学习代码实现了render::display 中的 函数
 fn main() {
     // 此处由于宏展开，必须使用编译器确定的变量才能正确将字节加载到二进制中
     let image_content = include_bytes!("../../resource/study/img.png");
@@ -27,7 +28,8 @@ fn main() {
         .pixels()
         .map(|pixel| {
             let [r, g, b, a] = pixel.0;
-            ((b as u32) << 24) | ((g as u32) << 16) | ((r as u32) << 8) | (a as u32)
+            // 通道顺序为RGBA，即先红色（R），然后绿色（G），然后蓝色（B），最后透明度（A）。
+            ((r as u32) << 16) | ((g as u32) << 8) | (b as u32)
         })
         .collect();
 
