@@ -1,5 +1,5 @@
 use image::{GenericImage, GenericImageView, ImageBuffer, Rgba};
-use render::display::*;
+use render::{display::*, display_images};
 use std::sync::{atomic::AtomicBool, Arc, Mutex};
 
 /// line绘制算法
@@ -80,9 +80,5 @@ fn main() {
     original_image
         .save(&format!("{}/study/img-display.png", resource_path))
         .expect("Failed to write clear TGA file");
-    let arc_image = Arc::new(Mutex::new(image::DynamicImage::ImageRgba8(
-        original_image.clone(),
-    )));
-
-    display_image(arc_image, 800, 800, Arc::new(AtomicBool::new(false)));
+    display_images!(5, original_image);
 }

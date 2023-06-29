@@ -55,12 +55,21 @@ pub fn line(
         }
     }
 }
+// 随机生成 RGBA
+pub fn random_rgba() -> Rgba<u8> {
+    let red: u8 = rand::random::<u8>();
+    let green: u8 = rand::random::<u8>();
+    let blue: u8 = rand::random::<u8>();
+    let alpha: u8 = rand::random::<u8>();
+    return Rgba([red, green, blue, alpha]);
+}
 
 #[cfg(test)]
 mod tests {
     use super::super::display_images;
     use super::*;
     use image::ImageBuffer;
+    use rand::Rng;
 
     #[test]
     fn test_normal_line() {
@@ -84,50 +93,79 @@ mod tests {
         assert_eq!(image.get_pixel(1, 1), &Rgba([0, 255, 0, 255]));
         assert_eq!(image.get_pixel(2, 2), &Rgba([0, 255, 0, 255]));
         assert_eq!(image.get_pixel(99, 99), &Rgba([0, 255, 0, 255]));
+
+        line(0, 0, 1000, 1000, &mut image, Rgba([255, 0, 0, 255]));
+        assert_eq!(image.get_pixel(0, 0), &Rgba([255, 0, 0, 255]));
+        assert_eq!(image.get_pixel(50, 50), &Rgba([255, 0, 0, 255]));
+        assert_eq!(image.get_pixel(99, 99), &Rgba([255, 0, 0, 255]));
         display_images!(2, image);
     }
 
     #[test]
     fn test_combination() {
         let mut image = ImageBuffer::new(100, 100);
-        // 同时绘制多条直线
-        line(0, 0, 100, 0, &mut image, Rgba([255, 0, 0, 255]));
-        line(0, 0, 0, 100, &mut image, Rgba([0, 255, 0, 255]));
-        line(10, 10, 10, 10, &mut image, Rgba([0, 0, 255, 255])); // 起点终点相同
-        line(200, 200, 200, 200, &mut image, Rgba([255, 255, 0, 255])); // 超出范围
+        //绘制由左上到右上的
+        line(10, 10, 90, 10, &mut image, Rgba([255, 255, 255, 255]));
+        assert_eq!(image.get_pixel(10, 10), &Rgba([255, 255, 255, 255]));
+        assert_eq!(image.get_pixel(50, 10), &Rgba([255, 255, 255, 255]));
+        assert_eq!(image.get_pixel(90, 10), &Rgba([255, 255, 255, 255]));
+
+        line(90, 10, 10, 10, &mut image, Rgba([0, 0, 255, 255]));
+        assert_eq!(image.get_pixel(90, 10), &Rgba([0, 0, 255, 255]));
+        assert_eq!(image.get_pixel(50, 10), &Rgba([0, 0, 255, 255]));
+        assert_eq!(image.get_pixel(10, 10), &Rgba([0, 0, 255, 255]));
+
+        //绘制由左上到右下的
+        line(10, 10, 90, 90, &mut image, Rgba([255, 0, 255, 255]));
+        assert_eq!(image.get_pixel(10, 10), &Rgba([255, 0, 255, 255]));
+        assert_eq!(image.get_pixel(50, 50), &Rgba([255, 0, 255, 255]));
+        assert_eq!(image.get_pixel(90, 90), &Rgba([255, 0, 255, 255]));
+
+        line(90, 90, 10, 10, &mut image, Rgba([255, 255, 255, 255]));
+        assert_eq!(image.get_pixel(10, 10), &Rgba([255, 255, 255, 255]));
+        assert_eq!(image.get_pixel(50, 50), &Rgba([255, 255, 255, 255]));
+        assert_eq!(image.get_pixel(90, 90), &Rgba([255, 255, 255, 255]));
+
+        //绘制由左上到左下的
+        line(10, 10, 10, 90, &mut image, Rgba([255, 0, 0, 255]));
+        assert_eq!(image.get_pixel(10, 10), &Rgba([255, 0, 0, 255]));
+        assert_eq!(image.get_pixel(10, 50), &Rgba([255, 0, 0, 255]));
+        assert_eq!(image.get_pixel(10, 90), &Rgba([255, 0, 0, 255]));
+
+        line(10, 90, 10, 10, &mut image, Rgba([255, 0, 255, 255]));
+        assert_eq!(image.get_pixel(10, 10), &Rgba([255, 0, 255, 255]));
+        assert_eq!(image.get_pixel(10, 50), &Rgba([255, 0, 255, 255]));
+        assert_eq!(image.get_pixel(10, 90), &Rgba([255, 0, 255, 255]));
+
+        //绘制由右上到左下的
+        line(90, 10, 10, 90, &mut image, Rgba([255, 0, 255, 255]));
+        assert_eq!(image.get_pixel(90, 10), &Rgba([255, 0, 255, 255]));
+        assert_eq!(image.get_pixel(50, 50), &Rgba([255, 0, 255, 255]));
+        assert_eq!(image.get_pixel(10, 90), &Rgba([255, 0, 255, 255]));
+
+        line(10, 90, 90, 10, &mut image, Rgba([255, 255, 255, 255]));
+        assert_eq!(image.get_pixel(10, 90), &Rgba([255, 255, 255, 255]));
+        assert_eq!(image.get_pixel(50, 50), &Rgba([255, 255, 255, 255]));
+        assert_eq!(image.get_pixel(90, 10), &Rgba([255, 255, 255, 255]));
+
         display_images!(2, image);
     }
 
-    // #[test]
-    // fn test_performance() {
-    //     let mut image = ImageBuffer::new(5000, 5000);
-    //     for _ in 0..5000 {
-    //         line(/*...*/, &mut image, /*...*/);
-    //     }
-    // }
-
     #[test]
-    fn test_boundary_line() {
-        let mut image = ImageBuffer::new(100, 100);
-        line(0, 0, 100, 0, &mut image, Rgba([255, 0, 0, 255]));
-        assert_eq!(image.get_pixel(0, 0), &Rgba([255, 0, 0, 255]));
-        assert_eq!(image.get_pixel(50, 0), &Rgba([255, 0, 0, 255]));
-        assert_eq!(image.get_pixel(100, 0), &Rgba([255, 0, 0, 255]));
-    }
+    fn test_performance() {
+        let width = 1920;
+        let height = 1080;
+        let mut image = ImageBuffer::new(width, height);
 
-    #[test]
-    fn test_line() {
-        let mut image = ImageBuffer::new(100, 100);
+        let mut rng = rand::thread_rng();
 
-        line(10, 10, 50, 50, &mut image, Rgba([255, 255, 255, 255])); // 使用白色绘制
-        assert_eq!(image.get_pixel(10, 10), &Rgba([255, 255, 255, 255]));
-        assert_eq!(image.get_pixel(50, 50), &Rgba([255, 255, 255, 255]));
-        assert_eq!(image.get_pixel(30, 30), &Rgba([255, 255, 255, 255]));
-
-        line(20, 13, 40, 80, &mut image, Rgba([255, 0, 0, 255])); // 使用红色绘制
-        assert_eq!(image.get_pixel(50, 50), &Rgba([255, 0, 0, 255])); // 验证中间点的颜色是否为红色
-
-        line(80, 40, 13, 20, &mut image, Rgba([255, 0, 0, 255])); // 使用红色绘制
-        assert_eq!(image.get_pixel(90, 90), &Rgba([255, 0, 0, 255])); // 验证终点的颜色是否为红色
+        for _ in 0..1000 {
+            let rx1 = rng.gen_range(0..width) as i32;
+            let ry1 = rng.gen_range(0..height) as i32;
+            let rx2 = rng.gen_range(0..width) as i32;
+            let ry2 = rng.gen_range(0..height) as i32;
+            line(rx1, ry1, rx2, ry2, &mut image, random_rgba());
+        }
+        display_images!(2, image);
     }
 }

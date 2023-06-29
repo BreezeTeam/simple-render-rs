@@ -27,6 +27,10 @@ path = 'src/study5.rs'
 name = 'study6'
 path = 'src/study6.rs'
 
+[[bin]]
+name = 'study7'
+path = 'src/study7.rs'
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -34,4 +38,5 @@ env_logger = "0.10.0"
 image = "0.24.6"
 log = "0.4.19"
 minifb = "0.24.0"
+obj = "0.10.2"
 render = { path = "../render" }
