@@ -1,9 +1,6 @@
-use env_logger;
-use image::{DynamicImage, GenericImageView};
-use image::{ImageBuffer, ImageFormat, Rgb, Rgba};
-use log;
+use image::GenericImageView;
+
 use minifb::{Key, Window, WindowOptions};
-use std::io::{self, Read, Write};
 
 /// 该示例代码将image 图像转为 [u32] 像素然后在窗口中进行了绘制
 /// 但是这个代码有个问题就是RGBA通道值有点不对

@@ -19,5 +19,7 @@ fn main() {
         let b = (0.3 * y as f32) as u8;
         *pixel = Rgba([r, 0, b, 255]);
     }
-    imgbuf.save(&format!("{}/study/img2.tga", resource_path)).expect("Failed to write TGA file");
+    imgbuf
+        .save(&format!("{}/study/img2.tga", resource_path))
+        .expect("Failed to write TGA file");
 }
