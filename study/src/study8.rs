@@ -1,5 +1,5 @@
 use image::{GenericImage, GenericImageView, ImageBuffer, Rgba};
-use render::{display::*, display_images, geometry::line};
+use render::{display::*, display_images, geometry::line, geometry::point};
 use std::sync::{atomic::AtomicBool, Arc, Mutex};
 
 /**
@@ -10,7 +10,7 @@ use std::sync::{atomic::AtomicBool, Arc, Mutex};
  * 根据得到的交点，确定每条扫描线的起始和结束x坐标。
  * 在每条扫描线的起始和结束x坐标之间填充像素
  */
-fn triangle_v1(
+fn triangle(
     v0: [i32; 3],
     v1: [i32; 3],
     v2: [i32; 3],
@@ -20,8 +20,7 @@ fn triangle_v1(
     let mut v0 = v0;
     let mut v1 = v1;
     let mut v2 = v2;
-    // 1. sort the vertices, t0, t1, t2 lower−to−upper
-    // 对三角形的顶点按照 y 坐标进行排序，确保顶点按照从上到下的顺序排列。
+    // 1.对三角形的顶点按照 y 坐标进行排序，确保顶点按照从上到下的顺序排列。
     if v0[1] > v1[1] {
         std::mem::swap(&mut v0, &mut v1);
     }
@@ -32,20 +31,20 @@ fn triangle_v1(
         std::mem::swap(&mut v1, &mut v2);
     }
 
-    // 使用线段绘制算法栅格化三角形的左边和右边。
-    // 对于每一条水平扫描线，找到与这条扫描线相交的左边界点和右边界点。
-    // 可以使用v1作为分割，然后两个循环分别设置像素点
+    // 2. 使用线段绘制算法栅格化三角形的左边和右边。
+    // 根据高度插值得到，对于每一条水平扫描线，找到与这条扫描线相交的左边界点和右边界点。
+    // 可以使用v1作为分割，然后上部分和下部分分别设置像素点
 
     //计算完整的三角形高度
-    let total_height = v2[1] - v0[1];
-    for h in 0..=total_height {
+    let total_height = v2[1] - v0[1] + 1;
+    for h in 1..=total_height {
         // 判断当前是上一部分还是下一部分
         let second_half = h > v1[1] - v0[1] || v1[1] == v0[1];
         // segment_height 是当前扫描线所在段的高度
         let segment_height = if second_half {
-            v2[1] - v1[1]
+            v2[1] - v1[1] + 1
         } else {
-            v1[1] - v0[1]
+            v1[1] - v0[1] + 1
         };
         // 计算当前高度
         let alpha = h as f32 / total_height as f32;
@@ -76,19 +75,10 @@ fn triangle_v1(
         // 从左边界点的x坐标开始，到右边界点的x结束，设置像素点
         for j in a[0] as i32..=b[0].round() as i32 {
             //坐标就是 x坐标:j 以及y坐标:h
-            image.put_pixel(j as u32, (v0[1] + h) as u32, color)
+            point(j, v0[1] + (h - 1), image, color)
         }
     }
 }
-
-/**
- * 片段光栅化算法（也称为逐片段光栅化算法）的算法逻辑如下：
- * 首先，确定三角形的顶点坐标（x1, y1），（x2, y2），（x3, y3）以及每个顶点的颜色。
- * 找到三角形的最小包围盒（bounding box），即确定三角形在屏幕上的最小矩形范围。
- * 针对最小包围盒内的每个像素，使用重心坐标插值计算像素对应在三角形上的位置以及颜色。
- * 判断计算得到的位置是否在三角形内部，如果在内部，则填充像素，根据重心坐标插值计算得到的颜色值。
- * 重复步骤3和步骤4，直到遍历完最小包围盒内的所有像素。
- */
 
 /// 绘制三角形
 fn main() {
@@ -104,7 +94,7 @@ fn main() {
     let white = Rgba([255, 255, 255, 255]); // 白色
 
     // 绘制三角形
-    triangle_v1(
+    triangle(
         [10, 70, 1],
         [50, 160, 1],
         [70, 80, 1],
