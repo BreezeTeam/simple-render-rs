@@ -1,12 +1,13 @@
 use image::imageops::flip_vertical_in_place;
 use image::{GenericImage, GenericImageView, ImageBuffer, Rgba};
+use nalgebra::{Point3, Vector3};
 use obj::{Obj, ObjData, Object, SimplePolygon};
 use render::transform::flip_vertically;
 use render::{display::*, display_images, geometry::*};
 use std::fs::File;
 use std::io::BufReader;
 use std::sync::{atomic::AtomicBool, Arc, Mutex};
-
+use std::vec;
 /**
  * 扫描线光栅化算法
  * 首先，确定三角形的顶点坐标（x1, y1），（x2, y2），（x3, y3）。
@@ -86,12 +87,12 @@ fn triangle(
 }
 
 /// 将顶点转换其xy坐标到图片坐标
-fn vec_trans(width: u32, height: u32, vertices: Vec<[f32; 3]>) -> Vec<[i32; 3]> {
-    let mut transformed_vertices: Vec<[i32; 3]> = Vec::new();
+fn vec_trans(width: u32, height: u32, vertices: Vec<[f32; 3]>) -> Vec<[f32; 3]> {
+    let mut transformed_vertices: Vec<[f32; 3]> = Vec::new();
     for vertex in vertices.iter() {
         let x = (vertex[0] + 1.) as f32 * width as f32 / 2.0;
         let y = (vertex[1] + 1.) as f32 * height as f32 / 2.0;
-        let transformed_vertex: [i32; 3] = [x as i32, y as i32, vertex[2] as i32];
+        let transformed_vertex: [f32; 3] = [x as f32, y as f32, vertex[2] as f32];
         transformed_vertices.push(transformed_vertex);
     }
     return transformed_vertices;
@@ -120,6 +121,13 @@ fn get_obj_polygons(obj_data: ObjData) -> Vec<Vec<[f32; 3]>> {
         }
     }
     return faces;
+}
+
+/// 计算三角形的法向量
+fn calculate_normal(vertices: &[Point3<f32>; 3]) -> Vector3<f32> {
+    let edge1 = vertices[1] - vertices[0];
+    let edge2 = vertices[2] - vertices[0];
+    edge1.cross(&edge2)
 }
 
 /// 读取 解析 obj https://github.com/simnalamburt/obj-rs
@@ -151,37 +159,52 @@ fn main() {
     );
     // 加载对象
     let obj_data = ObjData::load_buf(obj_content).expect("Failed to load OBJ file");
-
+    let light_dir = Vector3::new(0.0, 0.0, -1.0);
     // 获取polygons
     for polygon in get_obj_polygons(obj_data) {
         let transformed_vertices = vec_trans(width, height, polygon);
 
-        // 根据polygon转换的到的像素坐标，进行线段绘制
-        // 我们只绘制xy坐标，z坐标是深度信息，暂时忽略
-        for i in 0..2 {
-            let v0 = transformed_vertices[i];
-            let v1 = transformed_vertices[i + 1];
-            line(
-                v0[0],
-                v0[1],
-                v1[0],
-                v1[1],
+        // // 根据polygon转换的到的像素坐标，进行线段绘制
+        // // 我们只绘制xy坐标，z坐标是深度信息，暂时忽略
+        // for i in 0..2 {
+        //     let v0 = transformed_vertices[i];
+        //     let v1 = transformed_vertices[i + 1];
+        //     line(
+        //         v0[0],
+        //         v0[1],
+        //         v1[0],
+        //         v1[1],
+        //         &mut original_image,
+        //         Rgba([255, 0, 0, 255]),
+        //     );
+        // }
+
+        // 获得变换后的三角形顶点
+        let vertex1 = Point3::new(transformed_vertices[0][0] as f32, transformed_vertices[0][1] as f32, transformed_vertices[0][2] as f32);
+        let vertex2 = Point3::new(transformed_vertices[1][0] as f32, transformed_vertices[1][1] as f32, transformed_vertices[1][2] as f32);
+        let vertex3 = Point3::new(transformed_vertices[2][0] as f32, transformed_vertices[2][1] as f32, transformed_vertices[2][2] as f32);
+        let normal:Vector3<f32> = calculate_normal(&[vertex1, vertex2, vertex3]);
+
+
+        let mut intensity = normal.dot(&light_dir);
+        log::info!( "intensity :{:?}", intensity);
+
+        if intensity > 0. {
+            let color = Rgba([intensity as u8, intensity as u8, intensity as u8, 255]);
+            triangle(
+                transformed_vertices[0].map(|x| x as i32),
+                transformed_vertices[1].map(|x| x as i32),
+                transformed_vertices[2].map(|x| x as i32),
                 &mut original_image,
-                Rgba([255, 0, 0, 255]),
+                color
             );
         }
-        triangle(
-            transformed_vertices[0],
-            transformed_vertices[1],
-            transformed_vertices[2],
-            &mut original_image,
-            random_rgba(),
-        );
+
     }
 
     flip_vertically(&mut original_image);
     original_image
         .save(&format!("{}/study/img2-faces.png", resource_path))
         .expect("Failed to write clear TGA file");
-    display_images!(60, original_image);
+    // display_images!(60, original_image);
 }
