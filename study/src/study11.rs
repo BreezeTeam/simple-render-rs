@@ -107,8 +107,17 @@ fn main() {
                 transformed_vertices[1],
                 transformed_vertices[2],
                 &mut original_image,
-                color,
+                color
             );
+            // triangle_rasterization(
+            //     transformed_vertices[0],
+            //     transformed_vertices[1],
+            //     transformed_vertices[2],
+            //     color,
+            //     color,
+            //     color,
+            //     &mut original_image,
+            // );
         }
     }
 
@@ -116,5 +125,5 @@ fn main() {
     original_image
         .save(&format!("{}/study/img2-faces.png", resource_path))
         .expect("Failed to write clear TGA file");
-    display_images!(60, original_image);
+    display_images!(10, original_image);
 }
