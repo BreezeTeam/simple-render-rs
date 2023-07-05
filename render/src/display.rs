@@ -35,7 +35,7 @@ pub fn display_image(
         let u32_image: Vec<u32> = rgba_image
             .pixels()
             .map(|pixel| {
-                let [r, g, b, a] = pixel.0;
+                let [r, g, b, _a] = pixel.0;
                 // 通道顺序为RGBA，即先红色（R），然后绿色（G），然后蓝色（B），最后透明度（A）。
                 ((r as u32) << 16) | ((g as u32) << 8) | (b as u32)
             })

@@ -1,4 +1,5 @@
 use image::{ImageBuffer, Rgba};
+use nalgebra::{Point3, Vector3};
 
 /// 绘制一个像素点
 /// 具有边界检查
@@ -63,6 +64,7 @@ pub fn line(
         }
     }
 }
+
 // 随机生成 RGBA
 pub fn random_rgba() -> Rgba<u8> {
     let red: u8 = rand::random::<u8>();
@@ -81,7 +83,7 @@ pub fn random_rgba() -> Rgba<u8> {
  * 在每条扫描线的起始和结束x坐标之间填充像素
  * TODO:need test
  */
-fn triangle(
+pub fn triangle(
     v0: [i32; 3],
     v1: [i32; 3],
     v2: [i32; 3],
@@ -149,6 +151,82 @@ fn triangle(
             point(j, v0[1] + (h - 1), image, color)
         }
     }
+}
+
+/**
+ * 片段光栅化算法（逐片段光栅化算法）
+ * 确定三角形的顶点坐标（x1, y1），（x2, y2），（x3, y3）。
+ * 找到三角形的最小包围盒（bounding box），即确定三角形在屏幕上的最小矩形范围。
+ * 针对最小包围盒内的每个像素，使用重心坐标插值计算像素对应在三角形上的位置。
+ * 判断计算得到的位置是否在三角形内部，如果在内部，则填充像素。
+ * 重复步骤3和步骤4，直到遍历完最小包围盒内的所有像素。
+ */
+pub fn triangle_rasterization(
+    v0: [i32; 3],
+    v1: [i32; 3],
+    v2: [i32; 3],
+    c0: Rgba<u8>,
+    c1: Rgba<u8>,
+    c2: Rgba<u8>,
+    image: &mut ImageBuffer<Rgba<u8>, Vec<u8>>,
+) {
+    // 获取bbox
+    let min_x = i32::min(v0[0], i32::min(v1[0], v2[0]));
+    let max_x = i32::max(v0[0], i32::max(v1[0], v2[0]));
+    let min_y = i32::min(v0[1], i32::min(v1[1], v2[1]));
+    let max_y = i32::max(v0[1], i32::max(v1[1], v2[1]));
+    // 针对每个像素，计算器在三角形上的位置，判断其是否在三角形中
+    for y in min_y..=max_y {
+        for x in min_x..=max_x {
+            // 获得变换后的三角形顶点
+            let pts: [Point3<i32>; 3] = vec![v0, v1, v2]
+                .iter()
+                .map(|arr| Point3::new(arr[0], arr[1], arr[2]))
+                .collect::<Vec<_>>()
+                .try_into()
+                .unwrap();
+            let p_w = barycentric(&pts, Point3::new(x, y, 0));
+            if p_w.x >= 0. && p_w.y >= 0. && p_w.z >= 0. {
+                let Rgba([r0, g0, b0, _]) = c0;
+                let Rgba([r1, g1, b1, _]) = c1;
+
+                let r = interpolate(r0 as f32, r1 as f32, p_w.x as f32) as u8;
+                let g = interpolate(g0 as f32, g1 as f32, p_w.x as f32) as u8;
+                let b = interpolate(b0 as f32, b1 as f32, p_w.x as f32) as u8;
+
+                point(x, y, image, Rgba([r, g, b, 255]));
+            }
+        }
+    }
+}
+
+//计算重心坐标
+fn barycentric(pts: &[Point3<i32>; 3], p: Point3<i32>) -> Vector3<f32> {
+    let u = Vector3::new(
+        (pts[2].x - pts[0].x) as f32,
+        (pts[1].x - pts[0].x) as f32,
+        (pts[0].x - p.x) as f32,
+    )
+    .cross(&Vector3::new(
+        (pts[2].y - pts[0].y) as f32,
+        (pts[1].y - pts[0].y) as f32,
+        (pts[0].y - p.y) as f32,
+    ));
+
+    // 如果三角形退化（面积接近于0），返回具有负坐标的结果
+    if u.z.abs() < 1.0 {
+        return Vector3::new(-1.0, 1.0, 1.0);
+    }
+
+    let w0 = 1.0 - (u.x + u.y) / u.z;
+    let w1 = u.y / u.z;
+    let w2 = u.x / u.z;
+
+    Vector3::new(w0, w1, w2)
+}
+
+fn interpolate(min: f32, max: f32, grad: f32) -> f32 {
+    min + (max - min) * grad
 }
 
 #[cfg(test)]

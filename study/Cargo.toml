@@ -39,13 +39,13 @@ path = 'src/study8.rs'
 name = 'study9'
 path = 'src/study9.rs'
 
-#[[bin]]
-#name = 'study10'
-#path = 'src/study10.rs'
-#
-#[[bin]]
-#name = 'study11'
-#path = 'src/study11.rs'
+[[bin]]
+name = 'study10'
+path = 'src/study10.rs'
+
+[[bin]]
+name = 'study11'
+path = 'src/study11.rs'
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -54,5 +54,6 @@ env_logger = "0.10.0"
 image = "0.24.6"
 log = "0.4.19"
 minifb = "0.24.0"
+nalgebra = "0.32.2"
 obj = "0.10.2"
 render = { path = "../render" }
