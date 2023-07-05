@@ -54,5 +54,7 @@ env_logger = "0.10.0"
 image = "0.24.6"
 log = "0.4.19"
 minifb = "0.24.0"
+nalgebra = "0.32.2"
+ndarray = "0.15.6"
 obj = "0.10.2"
 render = { path = "../render" }
